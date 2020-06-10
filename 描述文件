@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Lockscreen version="1" frameRate="60" displayDesktop="true" screenWidth="1080" displayDesktop="ture">
+	<VariableBinders>	
+		<ContentProviderBinder uri="content://weather/weather" columns="city_name,temperature,temperature_range,description,weather_type" countName="hasweather">
+			<Variable name="weather_id" type="int" column="weather_type" />
+			<Variable name="weather_location" type="string" column="city_name" />
+			<Variable name="weather_temperature" type="int" column="temperature" />
+			<Variable name="weather_temperature_str" type="string" column="temperature" />
+			<Variable name="weather_temperature_range" type="string" column="temperature_range" />
+			<Variable name="weather_description" type="string" column="description" />
+		</ContentProviderBinder>
+		<!-- 应用通知-->
+		<ContentProviderBinder name="data" uri="content://keyguard.notification/notifications" columns="icon,title,content,time,key" countName="hasnotifications">
+			<Variable name="notice_icon0" type="blob.bitmap" column="icon" row="0"/>
+			<Variable name="notice_icon1" type="blob.bitmap" column="icon" row="1"/>
+			<Variable name="notice_icon2" type="blob.bitmap" column="icon" row="2"/>
+			<Variable name="notice_title" type="string[]" column="title"/>
+			<Variable name="notice_content" type="string[]" column="content"/>
+			<Variable name="notice_time" type="string[]" column="time"/>
+			<Variable name="notice_key" type="string[]" column="key"/>
+		</ContentProviderBinder>
+	</VariableBinders>
+	<ExternalCommands>  
+		<Trigger action="pause" >
+			<AnimationCommand target="a0"  command="play(0,0)" />
+			<AnimationCommand target="aa"  command="play(0,0)"/>
+			<AnimationCommand target="spin"  command="play(0,0)"/>
+		</Trigger>
+		<Trigger action="init,resume" > 
+			<AnimationCommand target="a0" command="play"/>
+			<AnimationCommand target="aa"  command="play"/>
+			<AnimationCommand target="spin"  command="play"/>
+			<VariableCommand name="musicButton" expression="0" />
+		</Trigger>
+	</ExternalCommands>
+	<Group visibility="">
+		<Var name="a0">
+			<VariableAnimation initPause="true" loop="false">
+				<AniFrame value="250" time="0" easeType="CircEaseOut"/>
+				<AniFrame value="0" time="600" />
+			</VariableAnimation>
+		</Var>
+		<Var name="aa">
+			<VariableAnimation initPause="true" loop="false">
+				<AniFrame value="0" time="0"/>
+				<AniFrame value="255" time="200" />
+			</VariableAnimation>
+		</Var>
+		<Var name="spin">
+			<VariableAnimation initPause="true" loop="false">
+				<AniFrame value="0" time="0" easeType="CircEaseOut"/>
+				<AniFrame value="360*1.5" time="1200" />
+			</VariableAnimation>
+		</Var>
+	</Group>
+	<Var name="gallery" expression="ifelse(isnull(#gallery),0,#gallery)" type="number" const="true" />
+	<Text x="#screen_width/2" y="#screen_height/2" align="center" alignV="center" text="锁屏设置里可设置此处背景图片" size="30" color="#ffffff" visibility="#Unlocker.state*#gallery" />
+	<Image x="#screen_width/2" y="#screen_height/2" align="center" alignV="center" name="photo" srcExp="ifelse(strContains(@photo,'com.android.fileexplorer'),strReplaceAll(@photo,'content://com.android.fileexplorer.myprovider/external_files/','file:///sdcard/'),strContains(@photo,'com.miui.gallery'),strReplaceAll(@photo,'content://com.miui.gallery.open/raw/%2Fstorage%2Femulated%2F0%2F','file:///sdcard/'),@photo)" srcType="Uri" visibility="#Unlocker.state*#gallery"  >
+		<Mask x="#screen_width/2" y="#screen_height/2" align="center" alignV="center" src="other/photo_mask.png" />
+	</Image>
+	
+	<Wallpaper y="#Camera.move_y*2.342857-#Unlocker.move_y*2.342857-#a0" visibility="" alpha="#aa"  >
+		<Mask src="other/mask_wallpaper.png" />
+	</Wallpaper>
+	
+	<Rectangle x="1080+#defaultScreen_x" w="1080" h="#screen_height" fillColor="#000000" visibility="#Camera.state"/>
+	<Image x="#screen_width/2" y="#screen_height" align="center" alignV="bottom" w="1080" srcExp="'shortcut/cam_bg_'+int(#screen_height==2720)+'.png'" visibility="#Camera.state" />
+	<!--解锁-->
+	<Unlocker name="Unlocker" visibility="eq(#unlockDown,0)">
+		<!--触摸开始区域-->
+		<StartPoint x="0" y="#screen_height-720" w="#screen_width" h="720" easeType="BounceEaseOut" easeTime="300" />
+		<!--达到解锁区域，注意写坐标位置-->
+		<EndPoint x="0" y="#screen_height-400" w="#screen_width" h="320">
+			<Path tolerance="200">
+				<!--解锁路径-->
+				<Position x="0" y="#screen_height-720" />
+				<Position x="0" y="#screen_height" />
+			</Path>
+			<Trigger>
+				<VariableCommand name="displayhelp" expression="0" persist="true" />
+			</Trigger>
+		</EndPoint>
+	</Unlocker>
+	<!--相机-->
+	<Slider name="Camera">
+		<!--触摸开始区域-->
+		<StartPoint x="0" y="1000" w="#screen_width" h="620" easeType="BounceEaseOut" easeTime="300" />	
+		<!--达到解锁区域，注意写坐标位置-->
+		<EndPoint x="0" y="0" w="#screen_width" h="800">
+			<Path tolerance="600">
+				<!--解锁路径-->
+				<Position x="0" y="1000" />
+				<Position x="0" y="280" />
+			</Path>
+			<Trigger>
+				<IntentCommand action="android.intent.action.MAIN" package="com.android.camera" class="com.android.camera.Camera"  >
+					<Extra name="ShowCameraWhenLocked" type="boolean" expression="1"/>
+					<Extra name="StartActivityWhenLocked" type="boolean" expression="1"/>
+				</IntentCommand>
+				</Trigger>
+		</EndPoint>
+	</Slider>
+	
+	<Group y="#Unlocker.move_y-#Camera.move_y+#a0"  alpha="#aa" >
+		<Rectangle x="#screen_width/2" y="#screen_height" align="center" alignV="bottom" w="#screen_width" h="720" cornerRadius="30,30" fillColor="#f5f5f5"  />
+		<Group y="#screen_height-1930">	
+			<!-- 天气 -->
+			<Var name="is_rain" expression="ge(#weather_id,4)*le(#weather_id,11)" />
+			<Var name="is_fog" expression="eq(#weather_id,3)" />
+			<Var name="is_snow" expression="ge(#weather_id,12)*le(#weather_id,17)" />
+			<Var name="is_dust" expression="ge(#weather_id,18)*le(#weather_id,21)+eq(#weather_id,23)+eq(#weather_id,24)" />
+			<Var name="icon_suffix" expression="ifelse(isnull(#weather_id),1,gt(#weather_id,24),1,#weather_id)" />
+			<Var name="icon_index" expression="ifelse(#is_rain,4,#is_snow,12,#is_dust,18,#is_fog,3,#icon_suffix)" />
+			<Image x="52" y="1400" srcExp="'weather/weather_'+ #icon_index + '.png'" alignV="bottom" />
+			<Text x="190" y="1405" size="32" color="#515355" alignV="bottom" format="%s  %s" paras="@weather_location,@weather_temperature_range" />
+			<!--时间-->
+			<Time name="time" x="1050" y="#screen_height-1040" align="right" src="time0/time.png" />
+			<DateTime x="1045" y="#screen_height-920" align="right" color="#515355" size="32" format="@date_time" />
+			<DateTime x="1045" y="#screen_height-880" align="right" color="#515355" size="28" format="EEE" />
+		</Group>
+		<Image src="other/line_1.png" y="#screen_height-470" alignV="center" />
+		<!--笔录-->
+		<Var name="word_rows" expression="ifelse(isnull(@word_rows),'Balloon',@word_rows)" type="string" const="true" bold="ture" />
+		<Var name="word_rows1" expression="ifelse(isnull(@word_rows1),'人生如乘坐热气球，',@word_rows1)" type="string" const="true" />
+		<Var name="word_rows2" expression="ifelse(isnull(@word_rows2),'在浩瀚的天空中飘荡欣赏风景，',@word_rows2)" type="string" const="true" />
+		<Var name="word_rows3" expression="ifelse(isnull(@word_rows3),'只有享受过程你才会忘记脚下的深渊',@word_rows3)" type="string" const="true" />
+		<Var name="word_rows4" expression="ifelse(isnull(@word_rows4),'                               By iMISSmilk',@word_rows4)" type="string" const="true" />
+		<Group y="#screen_height-1935" visibility="not(#hasnotifications)*(#music.music_state==0**#musicButton==0)">		
+			<Text name="wordtitle" x="35" y="#screen_height-820" width="#screen_width/2-35" marqueeSpeed="30" alpha="255" color="#fffcc80d" size="90" textExp="@word_rows" />
+			<Text name="wordtext1" x="35" y="#screen_height-690" width="620" marqueeSpeed="30" alpha="255" color="#515355" size="35" textExp="@word_rows1" />
+			<Text name="wordtext2" x="35" y="#screen_height-640" width="620" marqueeSpeed="30" alpha="255" color="#515355" size="35" textExp="@word_rows2" />
+			<Text name="wordtext3" x="35" y="#screen_height-590" width="620" marqueeSpeed="30" alpha="255" color="#515355" size="35" textExp="@word_rows3" />
+			<Text name="wordtext4" x="35" y="#screen_height-540" width="620" marqueeSpeed="30" alpha="255" color="#515355" size="35" textExp="@word_rows4" />
+		</Group>
+		<!-- APP -->
+		<Image src="other/cross.png" x="870" y="#screen_height-230" align="center" alignV="center" />
+		<Group x="770" y="#screen_height-330">
+			<!-- 1 -->
+			<Var name="rotation_a">
+				<VariableAnimation>
+					<AniFrame value="0" time="0" />
+					<AniFrame value="0" time="2800" />
+					<AniFrame value="90" time="3000" />
+					<AniFrame value="90" time="8200" />
+					<AniFrame value="0" time="8400" />
+					<AniFrame value="0" time="13400" />
+				</VariableAnimation>
+			</Var>
+			<Var name="rotation_b">
+				<VariableAnimation>
+					<AniFrame value="-90" time="0" />
+					<AniFrame value="-90" time="3000" />
+					<AniFrame value="0" time="3200" />
+					<AniFrame value="0" time="8000" />
+					<AniFrame value="-90" time="8200" />
+					<AniFrame value="-90" time="13400" />
+				</VariableAnimation>
+			</Var>
+			<Button w="168" h="168" align="center" alignV="center" visibility=" ">
+				<Normal>
+					<Image w="168" h="168" align="center" alignV="center" rotationX="#rotation_a" pivotY="168/2" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_1.package)+eqs(@task_1.package,''),'com.android.contacts,com.android.contacts.activities.TwelveKeyDialer',@task_1.package+','+@task_1.class)" />
+					<Image w="168" h="168" align="center" alignV="center" rotationX="#rotation_b" pivotY="168/2" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_1.package)+eqs(@task_1.package,''),'com.android.contacts,com.android.contacts.activities.TwelveKeyDialer',@task_1.package+','+@task_1.class)" />
+				</Normal>
+				<Pressed>
+					<Image w="168" h="168" align="center" alignV="center" alpha="180" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_1.package)+eqs(@task_1.package,''),'com.android.contacts,com.android.contacts.activities.TwelveKeyDialer',@task_1.package+','+@task_1.class)" />
+				</Pressed>
+				<Triggers>
+					<Trigger action="up">
+						<IntentCommand id="task_1" condition="not(isnull(@task_1.package)+eqs(@task_1.package,''))" />
+						<IntentCommand action="android.intent.action.MAIN" package="com.android.contacts" class="com.android.contacts.activities.TwelveKeyDialer" condition="isnull(@task_1.package)+eqs(@task_1.package,'')" />
+						<ExternCommand command="unlock" />
+					</Trigger>
+				</Triggers>
+			</Button>
+			<!-- 2 -->
+			<Button x="168+27" y="0" w="168" h="168" align="center" alignV="center" visibility=" ">
+				<Normal>
+					<Image x="168+27" y="0" w="168" h="168" align="center" alignV="center" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_2.package)+eqs(@task_2.package,''),'com.sina.weibo,com.sina.weibo.MainTabActivity',@task_2.package+','+@task_2.class)" />
+				</Normal>
+				<Pressed>
+					<Image x="168+27" y="0" w="168" h="168" align="center" alignV="center" alpha="180" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_2.package)+eqs(@task_2.package,''),'com.sina.weibo,com.sina.weibo.MainTabActivity',@task_2.package+','+@task_2.class)" />
+				</Pressed>	
+				<Triggers>
+					<Trigger action="up">
+						<IntentCommand id="task_2" condition="not(isnull(@task_2.package)+eqs(@task_2.package,''))" />
+						<IntentCommand action="android.intent.action.MAIN" package="com.sina.weibo" class="com.sina.weibo.MainTabActivity" condition="isnull(@task_2.package)+eqs(@task_2.package,'')" />
+						<ExternCommand command="unlock" />
+					</Trigger>
+				</Triggers>
+			</Button>
+			<!-- 3 -->
+			<Button x="0" y="168+27" w="168" h="168" align="center" alignV="center" visibility=" ">
+				<Normal>
+					<Image x="0" y="168+27" w="168" h="168" align="center" alignV="center" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_3.package)+eqs(@task_3.package,''),'com.tencent.mobileqq,com.tencent.mobileqq.activity.SplashActivity',@task_3.package+','+@task_3.class)" />
+				</Normal>	
+				<Pressed>
+					<Image x="0" y="168+27" w="168" h="168" align="center" alignV="center" alpha="180" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_3.package)+eqs(@task_3.package,''),'com.tencent.mobileqq,com.tencent.mobileqq.activity.SplashActivity',@task_3.package+','+@task_3.class)" />
+				</Pressed>
+				<Triggers>
+					<Trigger action="up">
+						<IntentCommand id="task_3" condition="not(isnull(@task_3.package)+eqs(@task_3.package,''))" />
+						<IntentCommand action="android.intent.action.MAIN" package="com.tencent.mobileqq" class="com.tencent.mobileqq.activity.SplashActivity" condition="isnull(@task_3.package)+eqs(@task_3.package,'')" />
+						<ExternCommand command="unlock" />
+					</Trigger>
+				</Triggers>
+			</Button>
+			<!-- 4 -->
+			<Button x="168+27" y="168+27" w="168" h="168" align="center" alignV="center" visibility=" ">
+				<Normal>
+					<Image x="168+27" y="168+27" w="168" h="168" align="center" alignV="center" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_4.package)+eqs(@task_4.package,''),'com.tencent.mm,com.tencent.mm.ui.LauncherUI',@task_4.package+','+@task_4.class)" />
+				</Normal>
+				<Pressed>
+					<Image x="168+27" y="168+27" w="168" h="168" align="center" alignV="center" alpha="180" srcType="ApplicationIcon" srcExp="ifelse(isnull(@task_4.package)+eqs(@task_4.package,''),'com.tencent.mm,com.tencent.mm.ui.LauncherUI',@task_4.package+','+@task_4.class)" />
+				</Pressed>
+				<Triggers>
+					<Trigger action="up">
+						<IntentCommand id="task_4" condition="not(isnull(@task_4.package)+eqs(@task_4.package,''))" />
+						<IntentCommand action="android.intent.action.MAIN" package="com.tencent.mm" class="com.tencent.mm.ui.LauncherUI" condition="isnull(@task_4.package)+eqs(@task_4.package,'')" />
+						<ExternCommand command="unlock" />
+					</Trigger>
+				</Triggers>
+			</Button>
+		</Group>
+		<!-- 通知 -->
+		<Var name="item_height" expression="110" const="true"/> 
+        <Var name="item_width" expression="#screen_width/2.3" const="true"/> 
+		<Group x="-10" y="#screen_height-425">
+			<Array count="3" indexName="_notice" visibility="#hasnotifications}0" >
+				<Button x="0" y="#_notice*#item_height" w="#item_width" h="#item_height" alignChildren="true" visibility="#_notice { #hasnotifications" >
+					<Normal>
+						<Text x="141" y="62" width="#screen_width/2.3-120" marqueeSpeed="30" size="26" color="#515355" alpha="222" textExp="@notice_content[#_notice]" fontFamily="miui-regular" /> 
+					</Normal>
+					<Pressed>
+						<Image src="other/mask_notice.png" alpha="50" />
+						<text x="141" y="62" color="#515355" size="26" text="点击进入" />
+					</Pressed>
+					
+                    <Text x="140" y="22" width="#screen_width/2.3-120" marqueeSpeed="30" size="28" color="#515355" alpha="255" textExp="@notice_title[#_notice]" bold="true" /> 
+					<Rectangle x="140" y="#item_height-1" w="#screen_width/2.3-120" h="1" strokeColor="#00000000" fillColor="#515355" weight="1" alpha="255*0.87"/>
+					<Triggers>
+						
+						<Trigger action="up,cancel">
+							<IntentCommand action="com.miui.app.ExtraStatusBarManager.action_remove_keyguard_notification" broadcast="true" condition="abs(#touch_x-#touch_begin_x){10" >
+								<Extra name="com.miui.app.ExtraStatusBarManager.extra_notification_key" type="int" expression="@notice_key[#noticeDown]" />
+								<Extra name="com.miui.app.ExtraStatusBarManager.extra_notification_click" type="int" expression="1" />
+							</IntentCommand>
+						</Trigger>
+					</Triggers>
+				</Button>
+			</Array>
+			<Var name="noticeIconXYWH" type="number[]" values="90,#item_height/2+7,90,90" const="true" />
+			<Image name="notice_icon0" x="#noticeIconXYWH[0]" y="#noticeIconXYWH[1]+0*#item_height" align="center" alignV="center" w="#noticeIconXYWH[2]" h="#noticeIconXYWH[3]" visibility="#hasnotifications}=1" />
+			<Image name="notice_icon1" x="#noticeIconXYWH[0]" y="#noticeIconXYWH[1]+1*#item_height" align="center" alignV="center" w="#noticeIconXYWH[2]" h="#noticeIconXYWH[3]" visibility="#hasnotifications}=2" />
+			<Image name="notice_icon2" x="#noticeIconXYWH[0]" y="#noticeIconXYWH[1]+2*#item_height" align="center" alignV="center" w="#noticeIconXYWH[2]" h="#noticeIconXYWH[3]" visibility="#hasnotifications}=3" />
+		</Group>
+		<!--音乐-->
+		<!-- 系统播放音乐时且音乐界面隐藏时，双击返回到音乐界面 -->
+		<Button y="1870" w="#screen_width/2" h="#screen_height-1870" visibility="not(#hasnotifications)">
+			<Triggers>
+				<Trigger action="double">
+					<VariableCommand name="musicButton" expression="int(#musicButton+1)%2" persist="true"/>
+				</Trigger>
+			</Triggers>
+		</Button>
+		<MusicControl name="music"  autoShow="true" visibility="not(#hasnotifications)*#music.music_state||#musicButton" enableProgress="true"  enableLyric="true" >
+			<SpectrumVisualizer x="#screen_width/2" y="#screen_height-680" w="1080" align="center" alignV="bottom" panelSrc="music/sliding_bg.png" dotbarSrc="music/sliding_bar.png" shadowSrc="music/sliding_shadow.png" />
+			<Image src="music/default_bg.png" x="35" y="#screen_height-400" w="143" h="143" align="left" />
+			<Image name="music_album_cover" x="35" y="#screen_height-400" w="143" h="143" align="left" >
+				<Mask src="music/music_mask.png" />
+			</Image>	
+			<Text x="35+160" y="#screen_height-390" w="350" alignV="left" textExp="ifelse(strIsEmpty(@music.title),'暂无音乐',@music.title)" color="#515355" size="38" marqueeSpeed="30" bold="true"/>
+			<Text x="35+160" y="#screen_height-320" w="350" alignV="left" textExp="ifelse(strIsEmpty(@music.artist),'--',@music.artist)" color="#515355" size="28" marqueeSpeed="30" alpha="188" />
+			<Text x="#screen_width/2+5" y="#screen_height-210" color="#515355" size="28" align="right" alignV="center" textExp="ifelse(strIsEmpty(@music.title),'--:--',formatDate('mm:ss',#music.music_position))" color="#515355" size="33" marqueeSpeed="30" alpha="255" />
+			<Var name="position_min10" expression="(#music.music_position/60000)/10" />
+			<Var name="position_min1" expression="(#music.music_position/60000)%10" />
+			<Var name="position_sec10" expression="(#music.music_position/1000%60)/10" />
+			<Var name="position_sec1" expression="(#music.music_position/1000%60)%10" />
+			<Var name="duration_min10" expression="(#music.music_duration/60000)/10" />
+			<Var name="duration_min1" expression="(#musicl.music_duration/60000)%10" />
+			<Var name="duration_sec10" expression="(#music.music_duration/1000%60)/10" />
+			<Var name="duration_sec1" expression="(#music.music_duration/1000%60)%10" />
+			<Image x="35" y="#screen_height-208" w="#screen_width/2-125" src="music/background.png" align="left" alignV="center" />
+			<Image x="35" y="#screen_height-208"  src="music/process.9.png" w="(#music.music_position/#music.music_duration)*(#screen_width/2-125)" h="8" align="left" alignV="center" />
+			<Button name="music_prev" x="80" y="#screen_height-140" w="135" h="135" align="center">
+				<Normal>
+					<Image x="80" y="#screen_height-140" src="music/prev.png" align="center" />
+				</Normal>
+				<Pressed>
+					<Image x="80" y="#screen_height-130" src="music/prev.png" align="center" alpha="120" />
+				</Pressed>
+			</Button>
+			<Button name="music_next" x="490" y="#screen_height-140" w="135" h="135" align="center">
+				<Normal>
+					<Image x="490" y="#screen_height-140" src="music/next.png" align="center" />
+				</Normal>
+				<Pressed>
+					<Image x="490" y="#screen_height-130" src="music/next.png" align="center" alpha="120" />
+				</Pressed>
+			</Button>
+			<Button name="music_play" x="285" y="#screen_height-140" w="135" h="135" align="center" >
+				<Normal>
+					<Image x="285" y="#screen_height-140" src="music/play.png" align="center" />
+				</Normal>
+				<Pressed>
+					<Image x="285" y="#screen_height-130" src="music/play.png" align="center" />
+				</Pressed>
+			</Button>
+			<Button name="music_pause" x="285" y="#screen_height-140" w="135" h="135" align="center" >
+				<Normal>
+					<Image x="285" y="#screen_height-140" src="music/pause.png" align="center" />
+				</Normal>
+				<Pressed>
+					<Image x="285" y="#screen_height-130" src="music/pause.png" align="center" />
+				</Pressed>
+			</Button>
+		</MusicControl>	
+		<Image src="logo.png" x="#screen_width/2" y="#screen_height-720" align="center" alignV="center" pivotX="100" pivotY="100" rotation="#spin+#Camera.move_y+#Unlocker.move_y"/>
+		<Button x="#screen_width/2" y="#screen_height-720" w="215" h="215" align="center" alignV="center" visibility="not(#music.visibility)">
+			<Triggers>
+				<Trigger action="double">
+					<IntentCommand action="android.intent.action.MAIN" package="com.android.thememanager" class="miui.maml.MamlConfigSettings">
+						<Extra name="maml_code" type="string" expression="'lockstyle'" />
+					</IntentCommand>
+					<IntentCommand action="android.intent.action.MAIN" package="com.android.thememanager" class="com.android.thememanager.view.LockscreenConfigSettings" />
+					<ExternCommand command="unlock" />
+				</Trigger>
+			</Triggers>
+		</Button>
+	</Group>
+	<Var name="displayhelp" expression="ifelse(isnull(#displayhelp),1,#displayhelp)" const="true" />
+	<Group name="help" visibility="#displayhelp">
+		<Image x="#screen_width/2" y="#Camera.move_y*2.342857-#Unlocker.move_y*2.342857" align="center" src="other/help_01.png" />
+		<Image x="#screen_width/2" y="#Unlocker.move_y-#Camera.move_y+#screen_height" align="center" alignV="bottom" src="other/help_02.png" />
+		<Image x="#screen_width/2+210" y="1800+#Unlocker.move_y-#Camera.move_y" scale="0.22" align="center" src="other/hand.png">
+			<PositionAnimation>
+				<Position x="0" y="0" time="0" />
+				<Position x="0" y="0" time="1000" />
+				<Position x="0" y="300" time="1800" />
+			</PositionAnimation>
+		</Image>
+	</Group>
+</Lockscreen>	
